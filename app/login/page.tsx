@@ -57,7 +57,7 @@ export default function Login() {
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Amoa ning Timesheet</h1>
-          <p className="text-gray-600">Track your time efficiently</p>
+          <p className="text-gray-600">Buhat timesheet aron sweldo</p>
         </div>
 
         <div className="bg-white shadow-md rounded-lg p-8">
