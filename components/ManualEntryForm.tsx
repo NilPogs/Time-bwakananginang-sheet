@@ -11,7 +11,8 @@ interface ManualEntryFormProps {
 
 export default function ManualEntryForm({ userId, selectedDate, onEntryAdded }: ManualEntryFormProps) {
   const [description, setDescription] = useState('');
-  const [duration, setDuration] = useState('');
+  const [hours, setHours] = useState('');
+  const [minutes, setMinutes] = useState('');
   const [date, setDate] = useState(selectedDate);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -24,10 +25,10 @@ export default function ManualEntryForm({ userId, selectedDate, onEntryAdded }: 
     setIsLoading(true);
 
     try {
-      const durationInMinutes = parseFloat(duration) * 60;
+      const totalMinutes = (parseInt(hours || '0') * 60) + parseInt(minutes || '0');
 
-      if (isNaN(durationInMinutes) || durationInMinutes <= 0) {
-        setError('Please enter a valid duration in hours (e.g., 2.5 for 2 hours 30 minutes)');
+      if (isNaN(totalMinutes) || totalMinutes <= 0) {
+        setError('Please enter a valid duration');
         setIsLoading(false);
         return;
       }
@@ -41,7 +42,7 @@ export default function ManualEntryForm({ userId, selectedDate, onEntryAdded }: 
       }
 
       const startTime = new Date(`${date}T00:00:00`);
-      const endTime = new Date(startTime.getTime() + durationInMinutes * 60 * 1000);
+      const endTime = new Date(startTime.getTime() + totalMinutes * 60 * 1000);
 
       const { error: insertError } = await supabase
         .from('timesheet_entries')
@@ -50,16 +51,17 @@ export default function ManualEntryForm({ userId, selectedDate, onEntryAdded }: 
           activity: description.trim(),
           start_time: startTime.toISOString(),
           end_time: endTime.toISOString(),
-          duration_minutes: Math.round(durationInMinutes),
+          duration_minutes: totalMinutes,
           entry_date: date,
         });
 
       if (insertError) throw insertError;
 
       setDescription('');
-      setDuration('');
+      setHours('');
+      setMinutes('');
       setDate(new Date().toISOString().split('T')[0]);
-      
+
       onEntryAdded();
     } catch (err) {
       console.error('Error adding entry:', err);
@@ -72,7 +74,7 @@ export default function ManualEntryForm({ userId, selectedDate, onEntryAdded }: 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
       <h2 className="text-xl font-semibold text-gray-900 mb-4">Add Manual Entry</h2>
-      
+
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
@@ -85,25 +87,40 @@ export default function ManualEntryForm({ userId, selectedDate, onEntryAdded }: 
             onChange={(e) => setDescription(e.target.value)}
             placeholder="What did you work on?"
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 focus:border-transparent"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-3 gap-4">
           <div>
-            <label htmlFor="duration" className="block text-sm font-medium text-gray-700 mb-1">
-              Duration (hours)
+            <label htmlFor="hours" className="block text-sm font-medium text-gray-700 mb-1">
+              Hours
             </label>
             <input
               type="number"
-              id="duration"
-              value={duration}
-              onChange={(e) => setDuration(e.target.value)}
-              placeholder="e.g., 2.5"
-              step="0.25"
-              min="0.25"
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 focus:border-transparent"
+              id="hours"
+              value={hours}
+              onChange={(e) => setHours(e.target.value)}
+              placeholder="0"
+              min="0"
+              max="23"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="minutes" className="block text-sm font-medium text-gray-700 mb-1">
+              Minutes
+            </label>
+            <input
+              type="number"
+              id="minutes"
+              value={minutes}
+              onChange={(e) => setMinutes(e.target.value)}
+              placeholder="0"
+              min="0"
+              max="59"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
             />
           </div>
 
@@ -117,7 +134,7 @@ export default function ManualEntryForm({ userId, selectedDate, onEntryAdded }: 
               value={date}
               onChange={(e) => setDate(e.target.value)}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
             />
           </div>
         </div>
